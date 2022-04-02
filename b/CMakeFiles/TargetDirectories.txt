@@ -1,0 +1,4 @@
+/home/trash/b/CMakeFiles/rebuild_cache.dir
+/home/trash/b/CMakeFiles/edit_cache.dir
+/home/trash/b/CMakeFiles/support.dir
+/home/trash/b/CMakeFiles/frenet_test.dir
