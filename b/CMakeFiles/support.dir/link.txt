@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsupport.a  CMakeFiles/support.dir/src/polynomials.cpp.o CMakeFiles/support.dir/src/cubic_spline_planner.cpp.o CMakeFiles/support.dir/src/frenet_optimal_trajectory.cpp.o CMakeFiles/support.dir/src/frenet_optimal_trajectory.cu.o
-/usr/bin/ranlib libsupport.a
