@@ -31,7 +31,7 @@ PurePursuitNode::PurePursuitNode()
   //pub_node->declare_parameter("right_trj");
 
   // Load launch mode
-  int lm = 3;
+  int lm = 2;
   //lm = pub_node->get_parameter("launch_mode").as_int();
   cout << "launching in mode #" << (int)lm << endl;
   launch_mode = (launch_mode_t) lm;
@@ -47,7 +47,6 @@ PurePursuitNode::PurePursuitNode()
   callback_group_engine_sub_ = sub_node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   callback_group_path_to_follow_sub_ = sub_node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   callback_group_local_path_sub_ = sub_node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
   // Everything assigned to a callback group gets bundled into the same thread
   auto estop_sub_opt = rclcpp::SubscriptionOptions();
   estop_sub_opt.callback_group = callback_group_estop_sub_;
@@ -61,7 +60,6 @@ PurePursuitNode::PurePursuitNode()
   path_to_follow_sub_opt.callback_group = callback_group_path_to_follow_sub_;
   auto local_path_sub_opt = rclcpp::SubscriptionOptions();
   local_path_sub_opt.callback_group = callback_group_local_path_sub_;
-
   // Init subscribers
   estop_sub = sub_node->create_subscription<std_msgs::msg::Bool>(
     "/commands/stop",
@@ -88,12 +86,11 @@ PurePursuitNode::PurePursuitNode()
     1,
     std::bind(&PurePursuitNode::path_to_follow_callback, this, _1),
     path_to_follow_sub_opt);
-  local_path_sub = sub_node->create_subscription<nav_msgs::msg::Path>(
+  local_path_sub = sub_node->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/local_path",
     1,
     std::bind(&PurePursuitNode::local_path_callback, this, _1),
     local_path_sub_opt);
-  
   // Init publishers
 #ifndef GIANNI
   drive_pub = pub_node->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/drive", 1);
@@ -145,14 +142,11 @@ PurePursuitNode::PurePursuitNode()
   // precise enough depends on the track length)
   if(launch_mode == MODE_FRENET)
   {
-    cout << "Building FRENET splines" << endl;
-    string trj_path;
-
-    // Optimal path
-    //private_node_handler.param<std::string>("opt_trj", trj_path, "");
+    cout << "Building FRENET splines" << endl; 
+    string trj_path; 
     trj_path = pub_node->get_parameter("opt_trj").as_string();
-    opt_paths[PATH_OPTIMAL] = load_flag_path(trj_path);
-    opt_path_splines[PATH_OPTIMAL] = local_path_spline;
+    opt_paths[PATH_OPTIMAL] = load_flag_path(trj_path);   
+    opt_path_splines[PATH_OPTIMAL] = local_path_spline; 
     cout << "Optimal spline built." << endl;
   }
   if(launch_mode == MODE_HEAD2HEAD)
@@ -199,33 +193,6 @@ PurePursuitNode::PurePursuitNode()
 
   cout << "Init done!" << endl;
   executor.spin();
-}
-
-void PurePursuitNode::local_path_callback(const nav_msgs::msg::Path path)
-{
-    Vec_d a=[];
-    Vec_d b=[];
-    double lx = 0;
-    double ly = 0;
-    for(geometry_msgs::msg::PoseStamped pose : path->poses)
-    {
-      double ax = pose.position.x;
-      double ay = pose.position.y;
-
-      if(local_path_spline != nullptr && ax == local_path_spline.calc_position(0)[0] && ay == local_path_spline.calc_position(0)[1])
-        return;
-
-      double distance = calc_distance((ax,ay),(lx,ly))
-      if(i == 0 || distance > 0){
-        a.push_back(ax);
-        b.push_back(ay);
-        lx = ax;
-        ly = ay;
-      }
-    }
-
-    local_path_spline = Spline2D(a,b);
-
 }
 
 void PurePursuitNode::build_path_msgs()
@@ -308,6 +275,32 @@ void PurePursuitNode::pose_callback(const geometry_msgs::msg::PoseStamped::Share
 void PurePursuitNode::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   ;
+}
+
+void PurePursuitNode::local_path_callback(const nav_msgs::msg::Path::SharedPtr path)
+{
+ Vec_d a;
+ Vec_d b;
+ double lx = 0; 
+ double ly = 0;  
+ for(int i=0;i<15;i++) 
+ {
+   geometry_msgs::msg::PoseStamped value = path->poses[i];
+   double ax = value.pose.position.x;
+   double ay = value.pose.position.y;
+   std::cout<<"x:"<<ax<<"\n";
+   double distance = ((ax - lx)*(ax - lx)) + ((ay +ly)*(ay +ly)); 
+   if(i == 0 || distance > 0)
+   { 
+	   a.push_back(ax);
+	   b.push_back(ay);  
+	   lx = ax;
+	   ly = ay; 
+   }
+ }
+
+ local_path_spline = new Spline2D(a,b);
+
 }
 
 /**
@@ -486,7 +479,7 @@ void PurePursuitNode::main_loop()
     geometry_msgs::msg::Point32 msg = geometry_msgs::msg::Point32();
     //cout << "final target speed: " << target_speed << endl;
     msg.x = target_speed/RPM2MS; // convert to engine RPM
-    msg.y = -target_steer;
+    msg.y = target_steer;
     state.steer = target_steer;
 #endif
     cout << target_speed << "," << target_steer << endl;

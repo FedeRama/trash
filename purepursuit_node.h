@@ -47,7 +47,7 @@ typedef enum launch_mode_t
   MODE_TIMEATTACK     = 0,
   MODE_OBSTACLETEST   = 1,
   MODE_HEAD2HEAD      = 2,
-  MODE_FRENET         = 3
+  MODE_FRENET	      = 3
 } launch_mode_t;
 
 typedef enum path_type_t
@@ -143,11 +143,13 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_scan_sub_;
   rclcpp::CallbackGroup::SharedPtr callback_group_engine_sub_;
   rclcpp::CallbackGroup::SharedPtr callback_group_path_to_follow_sub_;
+  rclcpp::CallbackGroup::SharedPtr callback_group_local_path_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr estop_sub;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub;
   rclcpp::Subscription<geometry_msgs::msg::Point32>::SharedPtr engine_sub;
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr path_to_follow_sub;
+  rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr local_path_sub;
 
   // Publishers
 #ifndef GIANNI
@@ -173,7 +175,7 @@ private:
   // optimal paths to follow
   vector3d opt_paths[4];
   Spline2D* opt_path_splines[4];
-  Spline2D local_path_spline;
+  Spline2D* local_path_spline;
   int num_paths;
 
   // current car state
@@ -197,6 +199,7 @@ public:
   void estop_callback(const std_msgs::msg::Bool::SharedPtr data);
   void engine_callback(const geometry_msgs::msg::Point32::SharedPtr data);
   void path_to_follow_callback(const std_msgs::msg::Int8::SharedPtr data);
+  void local_path_callback(const nav_msgs::msg::Path::SharedPtr path);
 
 #ifdef SIM
   void pose_callback(const nav_msgs::msg::Odometry::SharedPtr pose);
