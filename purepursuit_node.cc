@@ -31,7 +31,7 @@ PurePursuitNode::PurePursuitNode()
   //pub_node->declare_parameter("right_trj");
 
   // Load launch mode
-  int lm = 3;
+  int lm = 2;
   //lm = pub_node->get_parameter("launch_mode").as_int();
   cout << "launching in mode #" << (int)lm << endl;
   launch_mode = (launch_mode_t) lm;
@@ -153,7 +153,6 @@ PurePursuitNode::PurePursuitNode()
     cout << "Frenet spline built." << endl;
     
   }
-
   if(launch_mode == MODE_HEAD2HEAD)
   {
     cout << "Building splines" << endl;
@@ -175,7 +174,7 @@ PurePursuitNode::PurePursuitNode()
 
     // Left path
     private_node_handler.param<std::string>("left_trj", trj_path, "");
-    opt_paths[PATH_LEFT] = load_flag_path(trj_path);
+opt_path:s[PATH_LEFT] = load_flag_path(trj_path);
     opt_path_splines[PATH_LEFT] = new Spline2D(opt_paths[PATH_LEFT].xs, opt_paths[PATH_LEFT].ys);
     cout << "Left spline built." << endl;
 
@@ -375,8 +374,8 @@ void PurePursuitNode::main_loop()
     cout << cur_state.speed << "," << cur_state.steer << ",";
 
     // Choose trajectory with path chooser
-    //Spline2D* cur_path_spline = opt_path_splines[cur_path];
-    Spline2D* cur_path_spline = local_path_spline;
+    Spline2D* cur_path_spline = opt_path_splines[cur_path];
+   //Spline2D* cur_path_spline = local_path_spline;
     vector3d* cur_opt_path = &opt_paths[cur_path];
 
     if(cur_path == PATH_NONE)
@@ -395,8 +394,8 @@ void PurePursuitNode::main_loop()
 
       // Keep pose on spline updated for each path
       for (int i = 0; i < num_paths; i++)
-	local_path_spline->update_current_s(cur_state.x, cur_state.y);
-        //opt_path_splines[i]->update_current_s(cur_state.x, cur_state.y);
+	//local_path_spline->update_current_s(cur_state.x, cur_state.y);
+        opt_path_splines[i]->update_current_s(cur_state.x, cur_state.y);
                 
 
       // Get spline coordinates
